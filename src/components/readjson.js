@@ -1,60 +1,64 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import data from "../weatherSample.json"
 
 const ReadJson = () => {
     const [currentTime, setCurrentTime] = useState("");
+    const [currentWeather, setCurrentWeather] = useState(null);
 
     useEffect(() => {
-        const updateTime = () => {
-            const now = new Date();
-            const formattedTime = new Intl.DateTimeFormat("en-US", {
-                timeZone: "America/Los_Angeles",
-                hour: "2-digit",
-                minute: "2-digit",
-                second: "2-digit",
-                hour12: true,
-            }).format(now);
+        const now = new Date();
+        const formattedTime = new Intl.DateTimeFormat("en-US", {
+            timeZone: "America/Los_Angeles",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+            hour12: true,
+        }).format(now);
 
-            setCurrentTime(formattedTime);
-        }
-
-        const invtervalID = setInterval(updateTime, 1000);
-
-        return () => clearInterval(invtervalID);
-    }, []);
+        setCurrentTime(formattedTime);
+    }, [])
 
 
     const [temperature, setTemperature] = useState(null);
 
     useEffect(() => {
-        // Step 1: Get the current time in Portland
+        const fetchWeather = async () => {
+            try {
+                const response = await fetch('https://api.open-meteo.com/v1/forecast?latitude=45.575&longitude=-122.851&hourly=temperature_2m&temperature_unit=fahrenheit&forecast_days=1')
+                if (!response.ok) {
+                    throw new Error("Failed to fetch weather data");
+                }
+                const data = await response.json();
+                setCurrentWeather(data);
+            } catch (error) {
+                console.error("erro fetching weather:", error)
+            }
+        }
+        fetchWeather()
+    }, []);
+
+    useEffect(() => {
+        if (!currentWeather) return;
         const localTime = new Date();
-    
-        // Step 2: Round the time to the nearest hour
+
         const roundedTime = new Date(localTime);
         if (localTime.getMinutes() >= 30) {
-          // Add an extra hour if 30 minutes or more
-          roundedTime.setHours(localTime.getHours() + 1);
+            roundedTime.setHours(localTime.getHours() + 1);
         }
-        // Set minutes, seconds, and milliseconds to zero
         roundedTime.setMinutes(0, 0, 0);
-    
-        // Step 3: Convert the rounded time to Zulu (UTC) time
-        const zuluTime = roundedTime.toISOString().slice(0, 16); // Matches JSON time format
-    
-        // Step 4: Find the index of the matching time in the JSON
-        const timeIndex = data.hourly.time.findIndex((time) => time === zuluTime);
-    
-        // Step 5: Get the temperature value
+
+        const zuluTime = roundedTime.toISOString().slice(0, 16);
+
+        const timeIndex = currentWeather.hourly.time.findIndex((time) => time === zuluTime);
+
         if (timeIndex !== -1) {
-          setTemperature(data.hourly.temperature_2m[timeIndex]);
+            setTemperature(currentWeather.hourly.temperature_2m[timeIndex]);
         } else {
-          console.error("No matching time found in the JSON data.");
+            console.error("No matching time found in the JSON data.");
         }
-      }, []);
+    }, [currentWeather])
 
-
-
+    console.log(currentWeather);
 
     return (
         <div>
