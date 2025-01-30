@@ -4,6 +4,8 @@ import data from "../weatherSample.json"
 const ReadJson = () => {
     const [currentTime, setCurrentTime] = useState("");
     const [currentWeather, setCurrentWeather] = useState(null);
+    const [temperature, setTemperature] = useState(null);
+    const [timeIndex, setTimeIndex] = useState(null)
 
     useEffect(() => {
         const now = new Date();
@@ -17,9 +19,6 @@ const ReadJson = () => {
 
         setCurrentTime(formattedTime);
     }, [])
-
-
-    const [temperature, setTemperature] = useState(null);
 
     useEffect(() => {
         const fetchWeather = async () => {
@@ -49,9 +48,10 @@ const ReadJson = () => {
 
         const zuluTime = roundedTime.toISOString().slice(0, 16);
 
-        const timeIndex = currentWeather.hourly.time.findIndex((time) => time === zuluTime);
+        const localTimeIndex = currentWeather.hourly.time.findIndex((time) => time === zuluTime);
+        setTimeIndex(localTimeIndex)
 
-        if (timeIndex !== -1) {
+        if (localTimeIndex !== -1) {
             setTemperature(currentWeather.hourly.temperature_2m[timeIndex]);
         } else {
             console.error("No matching time found in the JSON data.");
@@ -65,10 +65,24 @@ const ReadJson = () => {
             <h1>Weather Data</h1>
             <p>{currentTime || "Loading..."}</p>
             <p>{temperature}</p>
-
-            {/* <p>{JSON.stringify(data.hourly.temperature_2m[0], null, 2)}</p> */}
-            {/* <p>Current time: {currentTime}</p> */}
-            {/* {console.log(data.hourly)} */}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Temperature (°F)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {currentWeather && currentWeather.hourly && currentWeather.hourly.time.slice(timeIndex, timeIndex + 4).map((time, index) => (
+                        <tr key={time}>
+                            <td>{new Date(time + "Z").toLocaleTimeString("en-US", { timeZone: "America/Los_Angeles", hour: '2-digit', minute: '2-digit', hour12: true})}</td>
+                            <td>{currentWeather.hourly.temperature_2m[timeIndex + index]}</td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+            
+            {/* <p>{currentWeather && currentWeather.hourly && currentWeather.hourly.temperature_2m[timeIndex] !== undefined ? currentWeather.hourly.temperature_2m[timeIndex+1] : "loading..."}</p> */}
         </div>
     );
 };
