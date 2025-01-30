@@ -59,7 +59,6 @@ const ReadJson = () => {
     return (
         <div>
             <h1>Weather Data</h1>
-            <h1>Current Time</h1>
             <p>{currentTime || "Loading..."}</p>
             <p>{temperature}</p>
 

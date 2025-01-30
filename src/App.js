@@ -2,8 +2,6 @@ import logo from './logo.svg';
 import './App.css';
 import ReadJson from './components/readjson'
 
-console.log();
-
 function App() {
   return (
     <div className="App">
